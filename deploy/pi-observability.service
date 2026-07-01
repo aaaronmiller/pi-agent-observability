@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Agent Observability server (collector + UI on :43190)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/misscheta/code/pi-agent-observability/apps/observability
+Environment=OBS_PORT=43190
+Environment=OBS_AUTH_TOKEN=devtoken
+ExecStart=/home/misscheta/.bun/bin/bun run server.ts
+Restart=on-failure
+RestartSec=3
+# Survives terminal close; with `loginctl enable-linger` also survives logout/reboot.
+
+[Install]
+WantedBy=default.target
