@@ -208,6 +208,18 @@ function matchSessionStats(pathname: string): string | null {
   return m ? m[1] : null;
 }
 
+/** Match /sessions/<session_id> (detail, no trailing path) */
+function matchSessionDetail(pathname: string): string | null {
+  const m = pathname.match(/^\/sessions\/([^\/]+)$/);
+  return m ? m[1] : null;
+}
+
+/** Match /sessions/<session_id>/resume */
+function matchSessionResume(pathname: string): string | null {
+  const m = pathname.match(/^\/sessions\/([^\/]+)\/resume$/);
+  return m ? m[1] : null;
+}
+
 // ─── Main handler ───────────────────────────────────────────────────────────
 
 async function handle(req: Request): Promise<Response> {
@@ -309,10 +321,28 @@ async function handle(req: Request): Promise<Response> {
     const pool = url.searchParams.get("pool") ?? "";
     const tag = url.searchParams.get("tag") ?? "";
     const since = url.searchParams.get("since") ?? "";
+    const searchQ = url.searchParams.get("q") ?? "";
+    const model = url.searchParams.get("model") ?? "";
+    const provider = url.searchParams.get("provider") ?? "";
     const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10), 200);
+    const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10), 0);
 
     try {
-      const rows = q.listSessions.all({ $pool: pool, $tag: tag, $limit: limit }) as any[];
+      // Use search query when search text or model/provider filters are present
+      let rows: any[];
+      if (searchQ || model || provider) {
+        rows = q.searchSessions.all({
+          $pool: pool,
+          $tag: tag,
+          $model: model,
+          $provider: provider,
+          $q: searchQ ? `%${searchQ}%` : "",
+          $limit: limit,
+          $offset: offset,
+        }) as any[];
+      } else {
+        rows = q.listSessions.all({ $pool: pool, $tag: tag, $limit: limit, $offset: offset }) as any[];
+      }
 
       // Filter by `since` in application code (optional low-frequency filter)
       const sessions = rows
@@ -320,6 +350,17 @@ async function handle(req: Request): Promise<Response> {
         .map(rowToSession);
 
       return jsonResponse({ sessions });
+    } catch (err: any) {
+      return jsonResponse({ error: err.message }, 500);
+    }
+  }
+
+  // ── GET /sessions/filters (distinct models + providers) ────────────
+  if (pathname === "/sessions/filters" && method === "GET") {
+    try {
+      const models = (q.distinctModels.all() as any[]).map(r => r.model).filter(Boolean);
+      const providers = (q.distinctProviders.all() as any[]).map(r => r.provider).filter(Boolean);
+      return jsonResponse({ models, providers });
     } catch (err: any) {
       return jsonResponse({ error: err.message }, 500);
     }
@@ -375,6 +416,85 @@ async function handle(req: Request): Promise<Response> {
         error_count: row.error_count ?? 0,
         latest_input: ctx?.latest_input ?? null,
         latest_ts: ctx?.latest_ts ?? null,
+      });
+    } catch (err: any) {
+      return jsonResponse({ error: err.message }, 500);
+    }
+  }
+
+  // ── GET /sessions/:session_id (detail) ───────────────────────────────
+  const sidDetail = matchSessionDetail(pathname);
+  if (sidDetail && method === "GET") {
+    try {
+      const session = q.getSession.get({ $session_id: sidDetail }) as any;
+      if (!session) return jsonResponse({ error: "session not found" }, 404);
+      return jsonResponse({
+        session_id: session.session_id,
+        pool: session.pool,
+        agent_name: session.agent_name,
+        cwd: session.cwd,
+        session_file: session.session_file,
+        provider: session.provider,
+        model: session.model,
+        first_ts: session.first_ts,
+        last_ts: session.last_ts,
+        event_count: session.event_count,
+        tags: JSON.parse(session.tags_json || "[]"),
+      });
+    } catch (err: any) {
+      return jsonResponse({ error: err.message }, 500);
+    }
+  }
+
+  // ── POST /sessions/:session_id/resume ─────────────────────────────────
+  // Generates a resume command for the given session.
+  const sidResume = matchSessionResume(pathname);
+  if (sidResume && method === "POST") {
+    try {
+      const session = q.getSession.get({ $session_id: sidResume }) as any;
+      if (!session) return jsonResponse({ error: "session not found" }, 404);
+
+      const pool = (session.pool || "").toLowerCase();
+      const agentName = (session.agent_name || "").toLowerCase();
+      const sessionFile = session.session_file || "";
+      const sid = session.session_id;
+
+      // Build the appropriate resume command based on pool/agent
+      let commands: string[] = [];
+
+      if (pool.includes("pi") || agentName === "pi" || pool === "default" || pool === "manual-agent") {
+        // Pi / oh-my-pi session
+        if (sessionFile) {
+          commands.push(`pi --fork "${sessionFile}"`);
+          commands.push(`pi --session "${sessionFile}"`);
+        } else {
+          commands.push(`pi --fork ${sid}`);
+        }
+      }
+
+      if (pool.includes("claude-code") || agentName.includes("claude")) {
+        commands.push(`claude --resume ${sid}`);
+      }
+
+      if (pool.includes("codex-cli") || pool.includes("codex")) {
+        commands.push(`codex --continue ${sid}`);
+      }
+
+      if (pool.includes("hermes")) {
+        commands.push(`hermes chat --session ${sid}`);
+      }
+
+      if (commands.length === 0) {
+        commands.push(`# No specific resume command for pool="${pool}" agent="${agentName}"`);
+        commands.push(`# Session ID: ${sid}`);
+      }
+
+      return jsonResponse({
+        session_id: sid,
+        pool: session.pool,
+        agent_name: session.agent_name,
+        session_file: sessionFile,
+        commands,
       });
     } catch (err: any) {
       return jsonResponse({ error: err.message }, 500);

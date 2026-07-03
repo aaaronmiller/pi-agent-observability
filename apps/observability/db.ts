@@ -55,7 +55,11 @@ export interface PreparedQueries {
   getSessionEvents: ReturnType<Database["query"]>;
   getSessionEventsSince: ReturnType<Database["query"]>;
   getSessionStats: ReturnType<Database["query"]>;
+  getSession: ReturnType<Database["query"]>;
   countTotals: ReturnType<Database["query"]>;
+  searchSessions: ReturnType<Database["query"]>;
+  distinctModels: ReturnType<Database["query"]>;
+  distinctProviders: ReturnType<Database["query"]>;
 }
 
 // ─── Init ───────────────────────────────────────────────────────────────────
@@ -149,6 +153,7 @@ export function prepare(db: Database): PreparedQueries {
       ))
     ORDER BY last_ts DESC
     LIMIT $limit
+    OFFSET $offset
   `);
 
   // ── Get events for a session (backward pagination) ─────────────────────
@@ -224,11 +229,67 @@ export function prepare(db: Database): PreparedQueries {
     LIMIT 1
   `);
 
+  // ── Get single session ────────────────────────────────────────────────
+  const getSession = db.query(`
+    SELECT
+      session_id, pool, agent_name, cwd, session_file, provider, model,
+      first_ts, last_ts, event_count, tags_json
+    FROM sessions
+    WHERE session_id = $session_id
+  `);
+
   // ── Totals for /health ──────────────────────────────────────────────────
   const countTotals = db.query(`
     SELECT
       (SELECT COUNT(*) FROM events) AS events_total,
       (SELECT COUNT(*) FROM sessions) AS sessions_total
+  `);
+
+  // ── Search sessions by text across multiple fields ────────────────
+  const searchSessions = db.query(`
+    SELECT
+      session_id, pool,
+      COALESCE(agent_name, '') AS agent_name,
+      COALESCE(cwd, '') AS cwd,
+      COALESCE(session_file, '') AS session_file,
+      COALESCE(provider, '') AS provider,
+      COALESCE(model, '') AS model,
+      first_ts, last_ts, event_count,
+      tags_json
+    FROM sessions
+    WHERE ($pool = '' OR pool = $pool)
+      AND ($tag = '' OR EXISTS (
+        SELECT 1 FROM json_each(tags_json) WHERE value = $tag
+      ))
+      AND ($model = '' OR model = $model)
+      AND ($provider = '' OR provider = $provider)
+      AND ($q = '' OR (
+             agent_name LIKE $q
+          OR model  LIKE $q
+          OR provider  LIKE $q
+          OR session_id  LIKE $q
+          OR cwd  LIKE $q
+          OR pool  LIKE $q
+      ))
+    ORDER BY last_ts DESC
+    LIMIT $limit
+    OFFSET $offset
+  `);
+
+  // ── Distinct models for filter dropdown ────────────────────────────
+  const distinctModels = db.query(`
+    SELECT DISTINCT model
+    FROM sessions
+    WHERE model IS NOT NULL AND model != ''
+    ORDER BY model
+  `);
+
+  // ── Distinct providers for filter dropdown ─────────────────────────
+  const distinctProviders = db.query(`
+    SELECT DISTINCT provider
+    FROM sessions
+    WHERE provider IS NOT NULL AND provider != ''
+    ORDER BY provider
   `);
 
   return {
@@ -240,7 +301,11 @@ export function prepare(db: Database): PreparedQueries {
     getSessionEventsSince,
     getSessionStats,
     getSessionContext,
+    getSession,
     countTotals,
+    searchSessions,
+    distinctModels,
+    distinctProviders,
   };
 }
 

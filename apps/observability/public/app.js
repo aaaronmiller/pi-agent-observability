@@ -12,7 +12,11 @@ const STATE = {
   token: new URLSearchParams(location.search).get("token") ?? "",
   view: "single", mode: "form", pool: "", tag: "", search: "", sort: "latest", hideAfter: "30m", showHidden: false,
   typeFilter: new Set(), autoScroll: true,
-  selectedSessionId: null, sessions: [], events: [], sessionsLoaded: false, hiddenSessions: loadHiddenSessions(),
+  selectedSessionId: null, sessions: [], events: [], sessionsLoaded: false,
+  sessionOffset: 0, sessionLimit: 50,
+  sessionSearch: "", sessionModel: "", sessionProvider: "",
+  filterModels: [], filterProviders: [],
+  hiddenSessions: loadHiddenSessions(),
   sidebarCollapsed: loadSidebarCollapsed(),
   focusedIdx: -1, lastEventTs: null,
   sseReconnectDelay: 1000, maxReconnectDelay: 10_000,
@@ -33,6 +37,9 @@ function loadURLState() {
   if (!["single", "swimlane", "race"].includes(STATE.view)) STATE.view = "single";
   if (p.has("mode")) STATE.mode = p.get("mode");
   else { const stored = localStorage.getItem("obs-mode"); if (stored === "form" || stored === "function") STATE.mode = stored; }
+  if (p.has("q")) { STATE.sessionSearch = p.get("q"); sessionSearch.value = STATE.sessionSearch; }
+  if (p.has("model")) { STATE.sessionModel = p.get("model"); modelFilter.value = STATE.sessionModel; }
+  if (p.has("provider")) { STATE.sessionProvider = p.get("provider"); providerFilter.value = STATE.sessionProvider; }
   if (p.has("pool")) { STATE.pool = p.get("pool"); poolFilter.value = STATE.pool; }
   if (p.has("tag")) { STATE.tag = p.get("tag"); tagFilter.value = STATE.tag; }
   if (p.has("sort")) { STATE.sort = p.get("sort"); sortSelect.value = STATE.sort; }
@@ -58,6 +65,9 @@ function saveURLState() {
   const p = new URLSearchParams();
   p.set("view", STATE.view);
   if (STATE.mode !== "form") p.set("mode", STATE.mode);
+  if (STATE.sessionSearch) p.set("q", STATE.sessionSearch);
+  if (STATE.sessionModel) p.set("model", STATE.sessionModel);
+  if (STATE.sessionProvider) p.set("provider", STATE.sessionProvider);
   if (STATE.pool) p.set("pool", STATE.pool);
   if (STATE.tag) p.set("tag", STATE.tag);
   if (STATE.sort !== "latest") p.set("sort", STATE.sort);
@@ -84,8 +94,11 @@ function saveURLState() {
 
 const $ = s => document.querySelector(s);
 const sessionSubnav = (() => { const el = document.querySelector("#session-subnav"); return el; })();
+const sessionSearch = $("#session-search");
 const poolFilter = $("#pool-filter");
 const tagFilter = $("#tag-filter");
+const modelFilter = $("#model-filter");
+const providerFilter = $("#provider-filter");
 const sortSelect = $("#sort-select");
 const hideAfterSelect = $("#hide-after-select");
 const showHiddenCB = $("#show-hidden-sessions");
@@ -414,9 +427,37 @@ window.setView = function(mode) {
 
 // ─── Sessions ───────────────────────────────────────────────────────────────
 
+async function fetchSessionFilters() {
+  try {
+    const url = apiUrl("/sessions/filters");
+    const res = await fetch(url, { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    STATE.filterModels = data.models ?? [];
+    STATE.filterProviders = data.providers ?? [];
+    // Populate dropdowns (preserve selection)
+    const selModel = modelFilter.value;
+    const selProvider = providerFilter.value;
+    modelFilter.innerHTML = '<option value="">all models</option>' +
+      STATE.filterModels.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+    providerFilter.innerHTML = '<option value="">all providers</option>' +
+      STATE.filterProviders.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("");
+    if (selModel) modelFilter.value = selModel;
+    if (selProvider) providerFilter.value = selProvider;
+  } catch { /* ignore */ }
+}
+
 async function fetchSessions() {
   try {
-    const url = apiUrl("/sessions", { pool: STATE.pool, tag: STATE.tag, limit: 100 });
+    const url = apiUrl("/sessions", {
+      pool: STATE.pool,
+      tag: STATE.tag,
+      q: STATE.sessionSearch,
+      model: STATE.sessionModel,
+      provider: STATE.sessionProvider,
+      limit: STATE.sessionLimit,
+      offset: STATE.sessionOffset,
+    });
     const res = await fetch(url, { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
@@ -428,7 +469,11 @@ async function fetchSessions() {
     if (STATE.sort === "expensive") {
       sessions.sort((a, b) => (STATE.sessionStats[b.session_id]?.total_cost ?? 0) - (STATE.sessionStats[a.session_id]?.total_cost ?? 0));
     }
-    STATE.sessions = sessions;
+    if (STATE.sessionOffset > 0) {
+      STATE.sessions = STATE.sessions.concat(sessions);
+    } else {
+      STATE.sessions = sessions;
+    }
     STATE.sessionsLoaded = true;
     renderSessions();
     updateBreadcrumb();
@@ -454,6 +499,46 @@ async function fetchSessionStats(sid) {
     if (STATE.view === "race") window.__raceStatsUpdate?.(sid, stats);
     if (sid === STATE.selectedSessionId) renderAgentSubnav();
   } catch { /* ignore */ }
+}
+
+/** Resume a session: fetch resume command and copy to clipboard. */
+async function resumeSession(sid) {
+  try {
+    const url = apiUrl(`/sessions/${sid}/resume`);
+    const res = await fetch(url, { method: "POST", headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (!data.commands || data.commands.length === 0) {
+      notifyUser("No resume command available for this session");
+      return;
+    }
+
+    // Pick the first command
+    const cmd = data.commands[0];
+    if (cmd.startsWith("#")) {
+      notifyUser(cmd.replace(/^# /, ""));
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(cmd);
+      notifyUser(`Copied: ${cmd}`);
+    } catch {
+      // Fallback: prompt
+      notifyUser(`Run: ${cmd} (could not auto-copy)`);
+    }
+  } catch { /* ignore */ }
+}
+
+/** Show a brief notification toast. */
+function notifyUser(msg) {
+  const el = document.createElement("div");
+  el.className = "obs-notification";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.classList.add("fade-out"); setTimeout(() => el.remove(), 500); }, 2500);
+}
 }
 
 function isHiddenByAge(s) {
@@ -582,6 +667,20 @@ function renderSessions() {
 
     el.appendChild(info);
 
+    const actions = document.createElement("div");
+    actions.className = "session-actions";
+
+    const resumeBtn = document.createElement("button");
+    resumeBtn.className = "session-resume-btn";
+    resumeBtn.type = "button";
+    resumeBtn.textContent = "▶";
+    resumeBtn.title = "Copy resume command to clipboard";
+    resumeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      resumeSession(s.session_id);
+    });
+    actions.appendChild(resumeBtn);
+
     const hideBtn = document.createElement("button");
     hideBtn.className = "session-hide-btn";
     hideBtn.type = "button";
@@ -591,9 +690,27 @@ function renderSessions() {
       e.stopPropagation();
       hiddenByUser ? unhideSessionFromSidebar(s.session_id) : hideSessionFromSidebar(s.session_id);
     });
-    el.appendChild(hideBtn);
+    actions.appendChild(hideBtn);
+
+    el.appendChild(actions);
 
     sessionList.appendChild(el);
+  }
+
+  // Load more link
+  if (STATE.sessions.length >= STATE.sessionLimit || STATE.sessionOffset > 0) {
+    const loadMore = document.createElement("div");
+    loadMore.className = "load-more";
+    loadMore.textContent = STATE.sessionOffset > 0
+      ? `load more (offset ${STATE.sessionOffset})`
+      : (STATE.sessions.length >= STATE.sessionLimit ? "load more" : "");
+    if (loadMore.textContent) {
+      loadMore.addEventListener("click", () => {
+        STATE.sessionOffset += STATE.sessionLimit;
+        fetchSessions();
+      });
+      sessionList.appendChild(loadMore);
+    }
   }
 }
 
@@ -1009,8 +1126,35 @@ function onFilterChange() {
   saveURLState();
 }
 
+// Debounce helper
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
+sessionSearch.addEventListener("input", debounce(() => {
+  STATE.sessionSearch = sessionSearch.value.trim();
+  STATE.sessionOffset = 0;
+  STATE.sessions = [];
+  onFilterChange();
+}, 300));
+
 poolFilter.addEventListener("input", onFilterChange);
 tagFilter.addEventListener("input", onFilterChange);
+
+modelFilter.addEventListener("change", () => {
+  STATE.sessionModel = modelFilter.value;
+  STATE.sessionOffset = 0;
+  STATE.sessions = [];
+  onFilterChange();
+});
+
+providerFilter.addEventListener("change", () => {
+  STATE.sessionProvider = providerFilter.value;
+  STATE.sessionOffset = 0;
+  STATE.sessions = [];
+  onFilterChange();
+});
 
 sortSelect.addEventListener("change", () => {
   STATE.sort = sortSelect.value;
@@ -1142,6 +1286,7 @@ setView(STATE.view);
 applySidebarCollapsed();
 fetchSessions();
 connectSSE();
+fetchSessionFilters();
 setInterval(fetchSessions, 3000);
 updateBreadcrumb();
 

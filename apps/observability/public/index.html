@@ -60,6 +60,13 @@
     .session-item:hover .session-hide-btn,.session-hide-btn:focus{opacity:1;background:var(--pill-bg);color:var(--red);outline:none}
     .session-item.hidden-session .session-hide-btn{color:var(--green)}
     .session-hidden-note{color:var(--orange);font-size:11px;margin-left:4px}
+    .session-actions{position:absolute;top:4px;right:6px;display:flex;gap:2px}
+    .session-resume-btn{width:17px;height:17px;border:none;background:transparent;color:var(--green);font-size:11px;line-height:15px;border-radius:4px;cursor:pointer;opacity:0.4}
+    .session-item:hover .session-resume-btn,.session-resume-btn:focus{opacity:1;background:var(--pill-bg);outline:none}
+    .load-more{padding:8px 10px;text-align:center;color:var(--accent);font-size:11px;cursor:pointer;border-top:1px solid var(--border)}
+    .load-more:hover{background:var(--hover)}
+    .obs-notification{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg-alt);color:var(--fg);padding:8px 16px;border-radius:8px;font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,0.3);z-index:9999;border:1px solid var(--border);transition:opacity 0.5s}
+    .obs-notification.fade-out{opacity:0}
     section{flex:1;display:flex;flex-direction:column;overflow:hidden}
     .pane-header{padding:5px 10px;border-bottom:1px solid var(--border);font-size:16.5px;color:var(--muted);background:var(--surface);flex-shrink:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
     .pane-header .ticker{margin-left:auto;font-size:13.5px;color:var(--muted)}
@@ -442,10 +449,20 @@
       <button id="sidebar-toggle" class="btn-sm" onclick="toggleSidebar()" title="Collapse sidebar (more room for the main view)">«</button>
     </div>
     <div class="sidebar-filters">
+      <label for="session-search">🔍 search</label>
+      <input id="session-search" type="text" placeholder="name, model, id…">
       <label for="pool-filter">pool</label>
       <input id="pool-filter" type="text" placeholder="default">
       <label for="tag-filter">tag</label>
       <input id="tag-filter" type="text" placeholder="any">
+      <label for="model-filter">model</label>
+      <select id="model-filter">
+        <option value="">all models</option>
+      </select>
+      <label for="provider-filter">provider</label>
+      <select id="provider-filter">
+        <option value="">all providers</option>
+      </select>
       <label for="sort-select">sort</label>
       <select id="sort-select">
         <option value="latest">Latest activity</option>
