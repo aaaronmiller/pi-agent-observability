@@ -163,7 +163,10 @@ export class ObsClient {
   /** Build and queue an event. Returns the constructed envelope. */
   emit<P>(type: ObsEventType, payload: P): ObsEventEnvelope<P> {
     const sid = this.sessionInfo.session_id;
-    const seq = this.seqCounters.get(sid) ?? 0;
+    // Hook adapters run one short process per event, so a counter that starts at 0 collides with the
+    // previous process on UNIQUE(session_id, seq) and the server silently ignores the event.
+    // Start each process at the current time in microseconds: unique across processes, still ordered.
+    const seq = this.seqCounters.get(sid) ?? Date.now() * 1000;
     this.seqCounters.set(sid, seq + 1);
 
     const envelope: ObsEventEnvelope<P> = {
