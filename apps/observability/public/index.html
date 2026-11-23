@@ -172,6 +172,25 @@
     .lane-body .lane-evt-detail .wrap-btn:hover{color:var(--text)}
 
     /* ─── Race mode: horizontal turn chunks with event arrows ───────── */
+    #projects-container{display:none;flex:1;overflow:auto;padding:14px}
+    #projects-container.active{display:flex;flex-direction:column;gap:10px}
+    body.view-projects aside{display:none}
+    .pj-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    #projects-filter{background:var(--pill-bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:15px;min-width:200px}
+    #projects-meta{color:var(--muted);font-size:14px}
+    .pj-table{border-collapse:collapse;width:100%;font-size:15px}
+    .pj-table th{position:sticky;top:0;background:var(--surface);color:var(--muted);font-weight:500;text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+    .pj-table th.sorted{color:var(--text)}
+    .pj-table th[data-dir="asc"]::after{content:" ▲";font-size:11px}
+    .pj-table th[data-dir="desc"]::after{content:" ▼";font-size:11px}
+    .pj-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap}
+    .pj-table tr:hover td{background:var(--pill-bg)}
+    .pj-name{font-weight:600}
+    .pj-sub,.pj-dossier{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+    .pj-num{text-align:right}
+    .pj-health{padding:1px 7px;border-radius:9px;font-size:13.5px;background:var(--pill-bg);color:var(--muted)}
+    .pj-clean{color:var(--green)} .pj-dirty{color:var(--orange)} .pj-ahead{color:var(--cyan)}
+    .pj-behind,.pj-diverged{color:var(--red)} .pj-missing{color:var(--red)}
     #race-container{display:none;flex:1;overflow:auto;padding:14px;background:radial-gradient(circle at 70% 0%,rgba(57,197,207,0.10),transparent 34%),var(--bg);position:relative}
     #race-container.active{display:flex;flex-direction:column;gap:12px}
     #race-container.inspecting{padding-bottom:min(38vh,380px)}
@@ -428,6 +447,7 @@
       <button id="btn-single" class="active" onclick="setView('single')">Single</button>
       <button id="btn-swimlane" onclick="setView('swimlane')">Swimlane</button>
       <button id="btn-race" onclick="setView('race')">Race</button>
+      <button id="btn-projects" onclick="setView('projects')">Projects</button>
     </div>
   </div>
   <div id="header-right">
@@ -530,6 +550,21 @@
     <div class="empty-state" id="race-empty"><span class="icon">⇢</span>Select agents from the sidebar to compare their turns</div>
   </div>
 
+  <div id="projects-container">
+    <div class="pj-bar">
+      <input id="projects-filter" type="search" placeholder="filter projects…" aria-label="Filter projects">
+      <span id="projects-meta"></span>
+    </div>
+    <table class="pj-table">
+      <thead><tr>
+        <th data-sort="name">Project</th><th data-sort="phase">Phase</th><th data-sort="tasks">Open tasks</th>
+        <th data-sort="lastCommit">Last commit</th><th data-sort="health">Git</th><th data-sort="lastSession">Last session</th>
+        <th data-sort="readiness">Readiness</th>
+      </tr></thead>
+      <tbody id="projects-body"></tbody>
+    </table>
+  </div>
+
   <div id="race-inspector" aria-hidden="true">
     <div class="race-inspector-head">
       <div>
@@ -565,5 +600,6 @@
 <script src="app.js"></script>
 <script src="swimlane.js"></script>
 <script src="race.js"></script>
+<script src="projects.js"></script>
 </body>
 </html>

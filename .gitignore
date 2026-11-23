@@ -49,3 +49,4 @@ logs/
 deep_docs/
 
 artifacts/
+.gstack/

@@ -34,7 +34,7 @@ function loadURLState() {
   if (!h) return;
   const p = new URLSearchParams(h);
   if (p.has("view")) STATE.view = p.get("view");
-  if (!["single", "swimlane", "race"].includes(STATE.view)) STATE.view = "single";
+  if (!["single", "swimlane", "race", "projects"].includes(STATE.view)) STATE.view = "single";
   if (p.has("mode")) STATE.mode = p.get("mode");
   else { const stored = localStorage.getItem("obs-mode"); if (stored === "form" || stored === "function") STATE.mode = stored; }
   if (p.has("q")) { STATE.sessionSearch = p.get("q"); sessionSearch.value = STATE.sessionSearch; }
@@ -391,7 +391,7 @@ window.setMode = function(mode) {
 };
 
 window.setView = function(mode) {
-  if (!["single", "swimlane", "race"].includes(mode)) mode = "single";
+  if (!["single", "swimlane", "race", "projects"].includes(mode)) mode = "single";
   STATE.view = mode;
   localStorage.setItem("obs-view", mode);
   $("#btn-single").classList.toggle("active", mode === "single");
@@ -400,6 +400,10 @@ window.setView = function(mode) {
   singlePane.style.display = mode === "single" ? "" : "none";
   swimlaneContainer.classList.toggle("active", mode === "swimlane");
   raceContainer?.classList.toggle("active", mode === "race");
+  $("#btn-projects")?.classList.toggle("active", mode === "projects");
+  document.getElementById("projects-container")?.classList.toggle("active", mode === "projects");
+  document.body.classList.toggle("view-projects", mode === "projects");
+  if (mode === "projects") window.__projectsOnView?.();
   if (mode !== "race") window.__raceCloseInspector?.();
   if (sessionSubnav) sessionSubnav.style.display = (mode === "single" && STATE.selectedSessionId) ? "flex" : "none";
   autoAddRow.style.display = mode === "swimlane" || mode === "race" ? "" : "none";
@@ -538,7 +542,6 @@ function notifyUser(msg) {
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => { el.classList.add("fade-out"); setTimeout(() => el.remove(), 500); }, 2500);
-}
 }
 
 function isHiddenByAge(s) {
