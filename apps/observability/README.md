@@ -43,7 +43,7 @@ The SSE endpoint also accepts `?token=<token>` (browsers can't set headers on Ev
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Health check (no auth) |
-| POST | `/events` | Ingest single event or array |
+| POST | `/events` | Ingest single event or array; also accepts durable-agent-core envelopes (see `envelope.ts`) |
 | GET | `/sessions` | List sessions (pool/tag/since/limit) |
 | GET | `/sessions/:id/events` | Replay events for a session |
 | GET | `/events/stream` | SSE stream (pool/tag/session_id/?token=) |

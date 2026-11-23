@@ -11,6 +11,7 @@ import * as fs from "node:fs";
 import { createDb, prepare, toRow, toSessionRow, rowToSession, rowToEvent } from "./db.js";
 import { MAX_REQUEST_BYTES } from "../../shared/types.js";
 import type { ObsEvent } from "../../shared/types.js";
+import { fromDurableEnvelope, isDurableEnvelope } from "./envelope.js";
 
 // ─── Config ─────────────────────────────────────────────────────────────────
 
@@ -295,7 +296,10 @@ async function handle(req: Request): Promise<Response> {
       return jsonResponse({ error: "invalid JSON" }, 400);
     }
 
-    const events: ObsEvent[] = Array.isArray(parsed) ? parsed : [parsed];
+    // Durable-agent-core envelopes arrive in their own shape; map them onto ObsEvents first.
+    const events: ObsEvent[] = (Array.isArray(parsed) ? parsed : [parsed]).map((e: any) =>
+      isDurableEnvelope(e) ? fromDurableEnvelope(e) : e,
+    );
     const ingested: string[] = [];
     const rejected: string[] = [];
 
