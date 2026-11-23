@@ -50,7 +50,7 @@ If flags are omitted, the extension falls back to these variables:
 - `OBS_SERVER_URL`
 - `OBS_AUTH_TOKEN`
 - `OBS_POOL`
-- `OBS_TAG`
+- `OBS_TAG` (or `OBS_TAGS`, the name the hook adapters use)
 - `OBS_NAME`
 - `OBS_DISABLE`
 

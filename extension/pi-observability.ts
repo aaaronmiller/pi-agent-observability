@@ -124,6 +124,15 @@ function extractUserMessage(content: any): { text: string; images_count: number 
   return { text: text.trim(), images_count };
 }
 
+/** pi passes the system prompt as a string; omp passes an array of blocks. */
+function promptText(p: unknown): string {
+  if (typeof p === "string") return p;
+  if (Array.isArray(p)) {
+    return p.map((b: any) => (typeof b === "string" ? b : typeof b?.text === "string" ? b.text : "")).filter(Boolean).join("\n\n");
+  }
+  return "";
+}
+
 function sha256hex(s: string): string {
   return crypto.createHash("sha256").update(s, "utf8").digest("hex");
 }
@@ -454,8 +463,9 @@ export default function (pi: ExtensionAPI) {
       } else if (typeof rawTag === "string") {
         tags = rawTag.split(",").map(t => t.trim()).filter(Boolean);
       }
-    } else if (process.env.OBS_TAG) {
-      tags = process.env.OBS_TAG.split(",").map(t => t.trim()).filter(Boolean);
+    } else if (process.env.OBS_TAG || process.env.OBS_TAGS) {
+      // OBS_TAGS is the name the Claude Code and Codex adapters read; accept both.
+      tags = (process.env.OBS_TAG || process.env.OBS_TAGS || "").split(",").map(t => t.trim()).filter(Boolean);
     }
 
     // 3. Reset seq counter + boot-snapshot gate
@@ -540,7 +550,7 @@ export default function (pi: ExtensionAPI) {
       session_file: sessionInfo.sessionFile,
     };
     if (!bootSnapshotEmitted) {
-      const sys = event.systemPrompt ?? "";
+      const sys = promptText(event.systemPrompt);
       if (sys) {
         payload.system_prompt = sys;
         payload.system_prompt_bytes = Buffer.byteLength(sys, "utf8");
