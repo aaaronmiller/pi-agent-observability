@@ -73,3 +73,29 @@ test("scan joins portfolio, git, tasks, sessions and catalog", async () => {
   const [b] = await scan({ ldRoot: ld, claudeProjects: claude, catalogFile: cat });
   expect(b.health).toMatchObject({ state: "behind", behind: 1, ahead: 0, against: "origin/main" });
 });
+
+test("the console server stores a posted snapshot and serves it", async () => {
+  const t = mkdtempSync(join(tmpdir(), "pscan-srv-"));
+  const port = 43000 + Math.floor(Math.random() * 900);
+  const env = { ...process.env, OBS_PORT: String(port), OBS_AUTH_TOKEN: "tok", OBS_DB_PATH: join(t, "obs.db") };
+  const srv = Bun.spawn(["bun", join(import.meta.dir, "../apps/observability/server.ts")], { env, stdout: "ignore", stderr: "ignore" });
+  try {
+    const base = `http://127.0.0.1:${port}`;
+    for (let i = 0; i < 50; i++) {
+      try { if ((await fetch(base + "/health")).ok) break; } catch {}
+      await Bun.sleep(100);
+    }
+    const auth = { authorization: "Bearer tok", "content-type": "application/json" };
+    expect((await fetch(base + "/projects")).status).toBe(401);
+    expect(await (await fetch(base + "/projects", { headers: auth })).json()).toMatchObject({ projects: [] });
+    expect((await fetch(base + "/projects", { method: "POST", headers: auth, body: "{\"projects\":3}" })).status).toBe(400);
+    const snap = { generatedAt: "2026-11-22T00:00:00Z", scanMs: 1, projects: [{ name: "alpha" }, { name: "beta" }] };
+    const r = await fetch(base + "/projects", { method: "POST", headers: auth, body: JSON.stringify(snap) });
+    expect(await r.json()).toMatchObject({ stored: 2 });
+    const got = await (await fetch(base + "/projects", { headers: auth })).json();
+    expect(got.projects.map((p: any) => p.name)).toEqual(["alpha", "beta"]);
+    expect(typeof got.receivedAt).toBe("string");
+  } finally {
+    srv.kill();
+  }
+});

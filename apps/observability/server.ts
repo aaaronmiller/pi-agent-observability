@@ -21,6 +21,8 @@ const HOST = process.env.OBS_HOST ?? "127.0.0.1";
 const PROJECT_ROOT = path.resolve(import.meta.dir, "../..");
 const DEFAULT_DB_PATH = path.join(PROJECT_ROOT, "db", "obs.db");
 const DB_PATH = process.env.OBS_DB_PATH ?? DEFAULT_DB_PATH;
+// Latest projects-view snapshot (scripts/projects-scan.ts), posted by the machine that holds the repos.
+const PROJECTS_PATH = process.env.OBS_PROJECTS_PATH ?? path.join(path.dirname(DB_PATH), "projects.json");
 
 // Ensure parent folder exists (e.g. "db/" directory) before initializing SQLite
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -168,7 +170,10 @@ async function readBody(req: Request): Promise<string> {
   if (len > MAX_REQUEST_BYTES) {
     throw new Error("Payload too large");
   }
-  return await req.text();
+  const text = await req.text();
+  // A chunked body declares no length; check what actually arrived.
+  if (Buffer.byteLength(text) > MAX_REQUEST_BYTES) throw new Error("Payload too large");
+  return text;
 }
 
 // ─── MIME types for static files ────────────────────────────────────────────
@@ -499,6 +504,33 @@ async function handle(req: Request): Promise<Response> {
     } catch (err: any) {
       return jsonResponse({ error: err.message }, 500);
     }
+  }
+
+  // ── POST /projects, GET /projects (projects view, OBS phase 4) ─────────
+  if (pathname === "/projects" && method === "POST") {
+    let parsed: any;
+    try {
+      parsed = JSON.parse(await readBody(req));
+    } catch (err: any) {
+      return jsonResponse({ error: err.message === "Payload too large" ? err.message : "invalid JSON" },
+        err.message === "Payload too large" ? 413 : 400);
+    }
+    if (!parsed || !Array.isArray(parsed.projects) || typeof parsed.generatedAt !== "string" ||
+        parsed.projects.some((p: any) => !p || typeof p.name !== "string")) {
+      return jsonResponse({ error: "expected {generatedAt, projects: [{name, ...}]}" }, 400);
+    }
+    const snapshot = { ...parsed, receivedAt: new Date().toISOString() };
+    const tmp = PROJECTS_PATH + ".tmp";
+    fs.writeFileSync(tmp, JSON.stringify(snapshot));
+    fs.renameSync(tmp, PROJECTS_PATH);
+    return jsonResponse({ stored: parsed.projects.length, receivedAt: snapshot.receivedAt });
+  }
+
+  if (pathname === "/projects" && method === "GET") {
+    if (!fs.existsSync(PROJECTS_PATH)) return jsonResponse({ projects: [], generatedAt: null, receivedAt: null });
+    return new Response(fs.readFileSync(PROJECTS_PATH), {
+      headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
+    });
   }
 
   // ── GET /events/stream (SSE) ──────────────────────────────────────────

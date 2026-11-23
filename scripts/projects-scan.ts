@@ -4,7 +4,10 @@
  * tasks, last commit and age, git health, last session, Living Documents
  * dossier and assignment-catalog readiness.
  *
- *   bun scripts/projects-scan.ts [--out projects.json]
+ *   bun scripts/projects-scan.ts [--out projects.json] [--post http://127.0.0.1:43190]
+ *
+ * --post sends the snapshot to the console server's POST /projects with the bearer
+ * token in OBS_AUTH_TOKEN; the server keeps the latest one and serves GET /projects.
  *
  * Sources, all read-only and local (no fetch, no network):
  *   portfolio.json            Living Documents portfolio index: name, phase, roots, dossier
@@ -221,7 +224,19 @@ if (import.meta.main) {
   const ms = Math.round(performance.now() - t0);
   const outAt = process.argv.indexOf("--out");
   const body = JSON.stringify({ generatedAt: new Date().toISOString(), scanMs: ms, projects: rows }, null, 1);
+  const postAt = process.argv.indexOf("--post");
   if (outAt > 0 && process.argv[outAt + 1]) writeFileSync(process.argv[outAt + 1], body + "\n");
-  else console.log(body);
+  if (postAt > 0 && process.argv[postAt + 1]) {
+    const r = await fetch(process.argv[postAt + 1].replace(/\/$/, "") + "/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${process.env.OBS_AUTH_TOKEN ?? ""}` },
+      body,
+    });
+    if (!r.ok) {
+      console.error(`POST /projects: ${r.status} ${await r.text()}`);
+      process.exit(1);
+    }
+  }
+  if (outAt < 0 && postAt < 0) console.log(body);
   console.error(`${rows.length} projects in ${ms} ms`);
 }
