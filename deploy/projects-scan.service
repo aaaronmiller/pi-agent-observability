@@ -1,0 +1,14 @@
+# Posts the projects-view snapshot (scripts/projects-scan.ts) to the console server.
+# Runs on the machine that holds the repos; the server URL is usually a tunnel
+# (link-remote-obs.sh). Token and URL come from client.env, never from this file:
+#   OBS_AUTH_TOKEN=...   OBS_SERVER_URL=http://127.0.0.1:43190
+[Unit]
+Description=Pi observability: post the projects scan
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/pi-observability/client.env
+WorkingDirectory=%h/code/pi-agent-observability
+ExecStart=/bin/sh -c 'exec "$HOME/.bun/bin/bun" scripts/projects-scan.ts --post "$OBS_SERVER_URL"'
+Nice=10

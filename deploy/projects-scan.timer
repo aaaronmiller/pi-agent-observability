@@ -1,0 +1,11 @@
+# Every 10 minutes; a scan of about 150 repos takes about a second.
+[Unit]
+Description=Pi observability: post the projects scan every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=false
+
+[Install]
+WantedBy=timers.target
