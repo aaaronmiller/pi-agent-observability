@@ -10,8 +10,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# 1. Read stdin and save it so both hooks can consume it
-INPUT=$(cat)
+# 1. Codex passes the turn payload as the last argument, not on stdin
+INPUT="${!#}"
 export STDIN_PAYLOAD="$INPUT"
 
 # 2. Fire aaa-memory hook (if configured)
@@ -20,4 +20,4 @@ if [ -n "${AAA_MEM_HOOK:-}" ]; then
 fi
 
 # 3. Fire obs adapter
-echo "$INPUT" | "$SCRIPT_DIR/obs-codex-hook.sh" 2>/dev/null || true
+"$SCRIPT_DIR/obs-codex-hook.sh" "$INPUT" 2>/dev/null || true

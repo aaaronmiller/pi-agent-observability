@@ -194,23 +194,23 @@ install_codex() {
 # Combined Codex CLI notify hook for Pi Observability.
 # Preserves existing notify hooks while adding observability.
 set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-INPUT=$(cat)
+# Codex passes the turn payload as the last argument, not on stdin.
+INPUT="${!#}"
 WRAPPER
 
   if [ -n "$existing_notify" ]; then
     # Trim quotes
-    local cleaned=$(echo "$existing_notify" | tr -d '"')
+    local cleaned=$(echo "$existing_notify" | tr -d '",')
     cat >> "$combined_script" << EXISTING_EOF
-# Existing notify hook (preserved)
-echo "\$INPUT" | $cleaned 2>/dev/null || true
+# Existing notify hook (preserved; Codex hands it the payload as an argument too)
+$cleaned "\$INPUT" 2>/dev/null || true
 
 EXISTING_EOF
   fi
 
   cat >> "$combined_script" << OBS_EOF
 # Pi Observability hook
-echo "\$INPUT" | "$SCRIPT_DIR/obs-codex-hook.sh" 2>/dev/null || true
+"$adapter_script" "\$INPUT" 2>/dev/null || true
 OBS_EOF
 
   chmod +x "$combined_script"

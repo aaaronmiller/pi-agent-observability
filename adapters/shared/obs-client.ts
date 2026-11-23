@@ -203,6 +203,8 @@ export class ObsClient {
         method: "POST",
         headers,
         body: JSON.stringify(batch),
+        // An unreachable host can hold a connect for over a minute; fail fast and let backoff retry.
+        signal: AbortSignal.timeout(5000),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -220,13 +222,22 @@ export class ObsClient {
     }
   }
 
-  /** Drain all remaining events. Call on shutdown. */
-  async drain(): Promise<void> {
+  /**
+   * Drain all remaining events. Call on shutdown. With a deadline (ms), give up and drop what is left
+   * once it passes, so a one-shot hook never hangs on an unreachable server.
+   */
+  async drain(deadlineMs?: number): Promise<void> {
     if (this.flushTimer) {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
+    const stopAt = deadlineMs === undefined ? Infinity : Date.now() + deadlineMs;
     while (this.pending.length > 0) {
+      if (Date.now() >= stopAt) {
+        console.error(`[obs-client] dropped ${this.pending.length} events: server unreachable`);
+        this.pending = [];
+        return;
+      }
       await this.flush();
       if (this.pending.length > 0) await new Promise(r => setTimeout(r, 200));
     }

@@ -48,7 +48,7 @@ bash adapters/install.sh --all --dry-run
 ```
 
 Each adapter script:
-1. Reads event JSON from **stdin** (the hook payload)
+1. Reads the hook payload: Claude Code and Hermes send it on **stdin**; Codex passes it as the **last argument**
 2. Normalizes to the canonical **ObsEventEnvelope** format
 3. POSTs to `http://127.0.0.1:43190/events`
 
@@ -86,6 +86,8 @@ Add to `~/.codex/config.toml`:
 ```toml
 notify = ["bun", "run", "/path/to/adapters/codex.ts"]
 ```
+
+Codex sends only the turn's prompt and final reply, so the adapter reads the served model, every tool call with its output, and the turn's token usage from the session rollout under `~/.codex/sessions` (or `$CODEX_HOME/sessions`). Each run is a separate process and gives up sending after four seconds, so an unreachable server never holds Codex up. `OBS_TAGS` and `DSCTL_RUN_ID` add tags, as for Claude Code.
 
 ### Hermes Agent
 
