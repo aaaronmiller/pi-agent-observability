@@ -13,7 +13,7 @@ set -euo pipefail
 
 # --- config (override via env) ----------------------------------------------
 SERVER_HOST="${OBS_SERVER_HOST:-192.168.0.200}"   # Fedora box LAN IP (or Tailscale/hostname)
-SERVER_USER="${OBS_SERVER_USER:-misscheta}"
+SERVER_USER="${OBS_SERVER_USER:-$USER}"           # your account on the server, if it differs from this one
 OBS_PORT="${OBS_PORT:-43190}"
 OBS_TOKEN="${OBS_AUTH_TOKEN:-devtoken}"            # MUST match the server's token
 SSH_PORT="${OBS_SSH_PORT:-22}"
@@ -33,6 +33,7 @@ fi
 if ! ssh -o BatchMode=yes -o ConnectTimeout=6 -p "$SSH_PORT" \
         "${SERVER_USER}@${SERVER_HOST}" true 2>/dev/null; then
   echo "!! Cannot SSH to ${SERVER_USER}@${SERVER_HOST} with key auth."
+  echo "   If your account on the server has another name, set OBS_SERVER_USER."
   echo "   Set up a key first:  ssh-keygen -t ed25519  &&  ssh-copy-id -p ${SSH_PORT} ${SERVER_USER}@${SERVER_HOST}"
   echo "   (and confirm the server is reachable — same LAN, or use Tailscale for cross-network)"
   exit 1
