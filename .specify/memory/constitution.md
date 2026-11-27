@@ -47,7 +47,7 @@ No feature, option or dependency is added that no requirement asks for. A depend
 1. Specify from the intent and the component's allocated requirements. Every allocated requirement number appears in the specification, and the specification names no technology except one the intent page shows the operator named as the subject or as a constraint.
 2. Plan from the design page and the intent. A component with a screen names its mockup pages.
 3. Tasks: every requirement maps to at least one task, or is listed as held with the ruling or the acceptance by another project that it waits on; a held requirement is not built until that arrives. Every task names its check, and tasks are left unticked until their evidence exists.
-4. Analyze reports no critical finding before any implementation begins.
+4. Analyze reports no critical finding before any implementation begins. The one exception is a task whose only effect is to remove a critical finding and which can be undone: it may run first, and the analysis is then run again.
 5. Implementation of a project begins only after the operator's review that names that project.
 6. A unit of work is finished when its checks pass, its documents are current, its scratch files are gone and its commit is on the main branch.
 
@@ -55,4 +55,4 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 This constitution outranks a component's own practices. A component constitution that already exists is kept: its rules stand as additions under these, and where one of its rules conflicts with a rule here, the conflict is written down and this page holds until the operator rules otherwise. A change to this page is made in the planning record first, with the reason and the date, and then carried to every repository in one pass. Reviews check compliance with these rules, and any departure is justified in writing in the plan.
 
-**Version**: 1.0.6 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
+**Version**: 1.0.7 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
