@@ -17,7 +17,7 @@ For each task the failing test is written and seen to fail before the code that 
 Every figure and every status has a standing: observed, estimated, stale, unavailable or conflicting. Missing is never shown as zero, and a guess is never shown as a reading. A thing known not to exist is shown as absent, which is different from a thing that could not be read. A capability is never shown as working when nothing implements it.
 
 ### V. The Operator Holds the Irreversible
-Agents act without waiting on anything that can be undone. Deleting, publishing, sending, spending, changing credentials or permissions, rewriting published history and moving top-level folders wait for the operator's decision on that exact action. One approval covers one action. A question to the operator restates what is being decided, gives options, a recommendation and the safe default, and never stops unrelated work.
+Agents act without waiting on anything that can be undone. Deleting what the agent did not create, publishing, sending, spending money, changing credentials or permissions, rewriting published history and moving top-level folders wait for the operator's decision on that exact action. One approval covers one action. A question to the operator restates what is being decided, gives options, a recommendation and the safe default, and never stops unrelated work.
 
 ### VI. Nothing Secret Leaves, Nothing Secret Is Stored
 No output, log, event, record or commit holds the value of a key, a token or a password. Records hold no environment values unrelated to the call. A private path is held only where the function needs it, in owner-only local state and local interfaces; anything that leaves the machine, goes into a record other machines read, or is tracked in a repository uses a placeholder. Private text goes only to the model families the operator has approved for it, unless it has been redacted first. No usage data is sent to an outside service.
@@ -46,7 +46,7 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 1. Specify from the intent and the component's allocated requirements. Every allocated requirement number appears in the specification, and the specification names no technology except one the intent page shows the operator named as the subject or as a constraint.
 2. Plan from the design page and the intent. A component with a screen names its mockup pages.
-3. Tasks: every requirement maps to at least one task, every task names its check, and tasks are left unticked until their evidence exists.
+3. Tasks: every requirement maps to at least one task, or is listed as held with the ruling or the acceptance by another project that it waits on; a held requirement is not built until that arrives. Every task names its check, and tasks are left unticked until their evidence exists.
 4. Analyze reports no critical finding before any implementation begins.
 5. Implementation of a project begins only after the operator's review that names that project.
 6. A unit of work is finished when its checks pass, its documents are current, its scratch files are gone and its commit is on the main branch.
@@ -55,4 +55,4 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 This constitution outranks a component's own practices. A component constitution that already exists is kept: its rules stand as additions under these, and where one of its rules conflicts with a rule here, the conflict is written down and this page holds until the operator rules otherwise. A change to this page is made in the planning record first, with the reason and the date, and then carried to every repository in one pass. Reviews check compliance with these rules, and any departure is justified in writing in the plan.
 
-**Version**: 1.0.4 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
+**Version**: 1.0.5 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
