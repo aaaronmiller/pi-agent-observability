@@ -29,7 +29,7 @@ Each kind of fact has one component that writes it and one place it lives. Every
 Work in progress is written to disk as it goes, so a crash, a restart or a lost connection loses at most one step. Starting again continues from the last recorded step and does not redo an effect that already has a receipt. Every effect outside the working folder gets a receipt. A component adds no always-running process unless its requirements call for one.
 
 ### IX. One Language Across the Stack
-Names of states, task classes, outcomes, pools and roles come from the stack's shared vocabulary; a component does not coin a second word for the same thing. Events follow one form with a sequence number that only rises. Each part publishes its version. Every page and panel follows the shared design language: one shell, one row shape, colour for state only, complexity hidden until asked for and never removed, everything reachable by keyboard, light and dark from the same tokens.
+Names of states, task classes, outcomes, pools and roles come from the stack's shared vocabulary; a component does not coin a second word for the same thing. Events follow one form with a sequence number that only rises. Each part publishes its version. Every page and panel follows the shared design language: one shell, one row shape, colour for state only, complexity hidden until asked for and never removed, everything reachable by keyboard, light and dark from the same tokens. A listing printed in a terminal may also use colour for the age of an item and to tell fields apart, where the record asks for it; every such colour is documented, and no fact is carried by colour alone.
 
 ### X. The Smallest Thing That Meets the Requirement
 No feature, option or dependency is added that no requirement asks for. A dependency is added only with the reason existing means are not enough, and only after its licence, version and the date the licence was read are recorded. Every setting has a default, so the component works before anything is configured. Change is previewed where it can be and reversible where it matters.
@@ -55,4 +55,4 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 This constitution outranks a component's own practices. A component constitution that already exists is kept: its rules stand as additions under these, and where one of its rules conflicts with a rule here, the conflict is written down and this page holds until the operator rules otherwise. A change to this page is made in the planning record first, with the reason and the date, and then carried to every repository in one pass. Reviews check compliance with these rules, and any departure is justified in writing in the plan.
 
-**Version**: 1.0.0 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
+**Version**: 1.0.1 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
