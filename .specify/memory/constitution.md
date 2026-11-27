@@ -11,7 +11,7 @@ A project has one intent page, one requirements page and one design page. A feat
 Nothing is reported done without a check that was run and its result. A task names its check before work on it starts. A worker's own report is not evidence; the files, the exit status and the test output are. A check that was not run is said to be not run. A failing check is never weakened or reinterpreted to obtain a pass.
 
 ### III. Tests First
-For each task the failing test is written and seen to fail before the code that makes it pass. A requirement with no test that could fail is not finished being written. Tests run against fixtures and never against the operator's live data.
+For each task the failing test is written and seen to fail before the code that makes it pass. A requirement with no test that could fail is not finished being written. Tests run against fixtures and never against the operator's live data. A check the record asks for on a real machine or device (a measurement, a drill, a reading of what is installed) is an acceptance check, not a test: it is allowed when it only reads or can be undone, and a device is backed up first.
 
 ### IV. Unknown Is a State
 Every figure and every status has a standing: observed, estimated, stale, unavailable or conflicting. Missing is never shown as zero, and a guess is never shown as a reading. A thing known not to exist is shown as absent, which is different from a thing that could not be read. A capability is never shown as working when nothing implements it.
@@ -20,7 +20,7 @@ Every figure and every status has a standing: observed, estimated, stale, unavai
 Agents act without waiting on anything that can be undone. Deleting, publishing, sending, spending, changing credentials or permissions, rewriting published history and moving top-level folders wait for the operator's decision on that exact action. One approval covers one action. A question to the operator restates what is being decided, gives options, a recommendation and the safe default, and never stops unrelated work.
 
 ### VI. Nothing Secret Leaves, Nothing Secret Is Stored
-No output, log, event, record or commit holds the value of a key, a token or a password. Records hold no environment values unrelated to the call. A private path is held only where the function needs it, in owner-only local state and local interfaces; anything that leaves the machine, goes to another component as an event or report, or is tracked in a repository uses a placeholder. Private text goes only to the model families the operator has approved for it, unless it has been redacted first. No usage data is sent to an outside service.
+No output, log, event, record or commit holds the value of a key, a token or a password. Records hold no environment values unrelated to the call. A private path is held only where the function needs it, in owner-only local state and local interfaces; anything that leaves the machine, goes into a record other machines read, or is tracked in a repository uses a placeholder. Private text goes only to the model families the operator has approved for it, unless it has been redacted first. No usage data is sent to an outside service.
 
 ### VII. One Owner per Fact
 Each kind of fact has one component that writes it and one place it lives. Every other component reads it through that owner's read interface, which changes nothing. Two stores that each claim the same fact is a defect. A component that needs a fact it does not own asks for it and does not keep its own copy as truth; a copy kept for speed is allowed when it carries its source and the time it was read, and is rebuilt from the owner when the two differ.
@@ -44,7 +44,7 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 ## Development Workflow and Quality Gates
 
-1. Specify from the intent and the component's allocated requirements. Every allocated requirement number appears in the specification, and the specification names no technology beyond what a requirement itself names.
+1. Specify from the intent and the component's allocated requirements. Every allocated requirement number appears in the specification, and the specification names no technology except one the intent page shows the operator named as the subject or as a constraint.
 2. Plan from the design page and the intent. A component with a screen names its mockup pages.
 3. Tasks: every requirement maps to at least one task, every task names its check, and tasks are left unticked until their evidence exists.
 4. Analyze reports no critical finding before any implementation begins.
@@ -55,4 +55,4 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 This constitution outranks a component's own practices. A component constitution that already exists is kept: its rules stand as additions under these, and where one of its rules conflicts with a rule here, the conflict is written down and this page holds until the operator rules otherwise. A change to this page is made in the planning record first, with the reason and the date, and then carried to every repository in one pass. Reviews check compliance with these rules, and any departure is justified in writing in the plan.
 
-**Version**: 1.0.3 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
+**Version**: 1.0.4 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
