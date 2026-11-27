@@ -301,7 +301,7 @@ Each requirement below is the record's clause, word for word, with its record nu
 #### Privacy and access
 
 - **REQ-024**: THE system SHALL remove secret values from an event before the event leaves the machine that produced it.
-  - Check: Emit a fixture event whose payload holds a made-up key in three shapes and capture what is sent. Pass: None of the three shapes is in the sent event or in the store.
+  - Check: Emit a fixture event whose payload holds a made-up key in each of three shapes, a prefixed key string, a bearer authorization header value and a NAME=value environment line, and capture what is sent. Pass: None of the three is in the sent event or in the store.
 - **REQ-025**: NO page address, event, export or log of this project SHALL contain a token or a key value.
   - Check: Scan every address the views produce, every export and every log of a fixture run for the fixture token. Pass: No match.
 - **REQ-026**: THE system SHALL listen only on the local machine unless an access token has been configured.
@@ -330,8 +330,8 @@ Each requirement below is the record's clause, word for word, with its record nu
 
 - **REQ-022**: THE events part SHALL accept and store events while the views part is stopped.
   - Check: Stop the views part and send fixture events. Pass: The events are stored and appear when the views part starts.
-- **REQ-023**: EACH of the four parts SHALL publish its own version.
-  - Check: Ask each part for its version and change one part. Pass: Four versions are returned. Only the changed part's version moves.
+- **REQ-023**: EACH part of the project SHALL publish its own version.
+  - Check: Ask each part for its version and change one part. Pass: Every part the record lists returns a version. Only the changed part's version moves.
 
 #### Open questions from the record that touch this component
 
