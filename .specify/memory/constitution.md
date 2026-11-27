@@ -20,7 +20,7 @@ Every figure and every status has a standing: observed, estimated, stale, unavai
 Agents act without waiting on anything that can be undone. Deleting, publishing, sending, spending, changing credentials or permissions, rewriting published history and moving top-level folders wait for the operator's decision on that exact action. One approval covers one action. A question to the operator restates what is being decided, gives options, a recommendation and the safe default, and never stops unrelated work.
 
 ### VI. Nothing Secret Leaves, Nothing Secret Is Stored
-No output, log, event, record or commit holds the value of a key, a token or a password. Records hold no environment values unrelated to the call and no private path. Private text goes only to the model families the operator has approved for it, unless it has been redacted first. No usage data is sent to an outside service.
+No output, log, event, record or commit holds the value of a key, a token or a password. Records hold no environment values unrelated to the call. A private path is held only where the function needs it, in owner-only local state and local interfaces; anything that leaves the machine, goes to another component as an event or report, or is tracked in a repository uses a placeholder. Private text goes only to the model families the operator has approved for it, unless it has been redacted first. No usage data is sent to an outside service.
 
 ### VII. One Owner per Fact
 Each kind of fact has one component that writes it and one place it lives. Every other component reads it through that owner's read interface, which changes nothing. Two stores of the same fact is a defect. A component that needs a fact it does not own asks for it and does not keep its own copy as truth.
@@ -55,4 +55,4 @@ No feature, option or dependency is added that no requirement asks for. A depend
 
 This constitution outranks a component's own practices. A component constitution that already exists is kept: its rules stand as additions under these, and where one of its rules conflicts with a rule here, the conflict is written down and this page holds until the operator rules otherwise. A change to this page is made in the planning record first, with the reason and the date, and then carried to every repository in one pass. Reviews check compliance with these rules, and any departure is justified in writing in the plan.
 
-**Version**: 1.0.1 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
+**Version**: 1.0.2 | **Ratified**: pending operator ratification (drafted 2026-11-27) | **Last Amended**: 2026-11-27
