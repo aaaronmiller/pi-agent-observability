@@ -15,4 +15,4 @@
 1. The reply is never changed. The parse reads it and stores figures with a locator to the reply (REQ-010).
 2. The outcome is one of `parsed`, `absent`, `malformed`, `incomplete` (REQ-011). A missing figure is `unavailable`; a malformed one is marked malformed; neither is guessed.
 3. A figure the header gives and a measured figure that disagrees make the reading `conflicting` (REQ-156).
-4. An agent whose replies repeatedly lack the header is reported (REQ-156).
+4. An agent whose replies lack the header is reported (REQ-156). The record gives no count of replies before a report; this contract adds none.

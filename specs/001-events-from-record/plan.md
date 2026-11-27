@@ -2,7 +2,7 @@
 
 **Branch**: none created (work stays on the main line; the feature is named `001-events-from-record`) | **Date**: 2026-11-27 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/001-events-from-record/spec.md`, the record's design page (decisions `CTX-001` to `CTX-030`), the stack constitution in `.specify/memory/constitution.md` (version 1.0.4), and the code in this repository as read on 2026-11-27.
+**Input**: Feature specification from `specs/001-events-from-record/spec.md`, the record's design page (decisions `CTX-001` to `CTX-030`), the stack constitution in `.specify/memory/constitution.md` (version 1.0.6), and the code in this repository as read on 2026-11-27.
 
 ## Summary
 
@@ -42,10 +42,10 @@ Taken from the code, not from the record.
 | II Evidence before any claim | Pass | The Record versus code list names a path for each finding; what was not read is listed. |
 | III Tests first, fixtures only | Pass for the plan; open for the code | Quickstart checks use fixtures only. The existing suite covers no clause of this spec, so tests come first for every clause. |
 | IV Unknown is a state | Conflict in the code | The extension leaves speed undefined instead of `unavailable`; a missing seq is taken as 0 (`apps/observability/server.ts`). The plan's data model gives every value a state. |
-| V Operator holds the irreversible | Pass | Nothing in the plan deletes data; retention has no end until the operator sets one. |
-| VI Nothing secret leaves or is stored | Conflict in the code | No redaction anywhere; full transcript text and folder paths are stored; the token is printed and logged and accepted in an address; a fixed development token is the default in the service unit. The plan closes each (research R-04, R-06, R-07, R-14). |
-| VII One owner per fact | Open item | Call rows copy Routing's requested and served figures for speed; allowed only with source and read time and rebuilt on difference (data model). The current code keeps a start record of its own (fingerprints), which the plan drops (research R-13). |
-| VIII Survive interruption | Open item | Whether each machine needs an always-running sender for its buffer is not settled; the plan proposes draining from the next adapter run and the intake's reconnect, and keeps a sender only if a check shows loss without it. |
+| V Operator holds the irreversible | Pass | Nothing in the plan deletes data; retention has no end until the operator sets one. Edits inside tracked files are reversible changes and are made by tasks; deleting or moving tracked files, deleting stored data the agent did not create, changing credentials and rewriting published history wait for the operator (tasks.md, Held for ruling and OPERATOR tasks). The feature's sources name no kind of reversible change the operator has reserved. |
+| VI Nothing secret leaves or is stored | Conflict in the code and in the published history | No redaction anywhere; full transcript text and folder paths are stored; the token is printed and logged and accepted in an address; a fixed development token is the default in the service unit and appears in several tracked documents (item 23). The plan closes each in the tree (research R-04, R-06, R-07, R-14). The published history keeps the token, a machine nickname and a private network address; only the operator can rewrite it (tasks.md, H-14). |
+| VII One owner per fact | Open item | Call rows copy Routing's requested and served figures for speed; allowed only with source and read time and rebuilt on difference (data model). Records that other projects send (Fleet readings, Recovery records, Quartermaster events, budget readings, task states) are stored as events with `source` and `received_at`; an answer built from them names that source and age, and where the owning project's own interface gives a different current value, the owner's value is shown and the stored event stays as the record of what was received. The current code keeps a start record of its own (fingerprints), which the plan drops (research R-13). |
+| VIII Survive interruption | Open item | Whether each machine needs an always-running sender for its buffer is not settled; the plan proposes draining from the next adapter run and the intake's reconnect, and keeps a sender only if a check shows loss without it. The views part becomes a second always-running process on the always-on machine (research R-01); REQ-022 calls for it, because the events part must keep storing while the views part is stopped. The watchdog and the read interface run inside the events process and add no process. |
 | IX One language | Conflict in the code | Sixteen event types, not the seven kinds; field names are not from the terminology list; the sequence is clock-based in hook adapters and reset to 0 in the extension; the server reports one version for everything. |
 | X Smallest thing | Conflict in the code | Dependencies are listed at `latest` and `*` with no licence, version or date record. Every new setting in the plan has a default (data model, Setting). |
 | Existing component constitution | Conflict | The repository root holds an older component constitution (`constitution.md`). Under the stack constitution's governance its principles stand as additions. Its first principle, that recovery survives the crash, conflicts with the record, which moves recovery out of this project (the views clause REQ-132 and design decision `CTX-019`). The conflict is written down here for the operator; the plan follows the record. Its other principles (no special case for one tool class, never worsen a damaged artifact, loopback with a token, honesty about capability tiers) agree with the record. |
@@ -78,14 +78,26 @@ Current layout, kept; additions are this plan's proposal, following the record's
 
 ```text
 adapters/              harness hook adapters (kept); add redaction and the local buffer
-  shared/              shared client (kept); producer state, epoch and sequence
+  shared/              shared client (kept); proposed modules: producer-state,
+                       machine-id, buffer, redact, project-identity, status-header
+  registry.ts          proposed: the list of adapters
 extension/             pi extension (kept)
 apps/observability/    intake, store, live stream, UI (kept)
-  readers/             proposed: gateway, usage, backfill readers
-  watchdog/            proposed: alert rules, coverage, gaps
-  read-interface/      proposed: local service and command
-shared/                shared types (kept); the envelope and value sets
-forms/                 proposed: event, read interface, status header, command forms
+  intake.ts            proposed: the intake answer and refusals
+  settings.ts          proposed: settings with defaults and standing
+  sources.ts           proposed: the source list
+  versions.ts          proposed: part versions
+  views-server.ts      proposed: the views part as its own process
+  VERSION              proposed: the events part's version
+  public/VERSION       proposed: the views part's version
+  readers/             proposed: gateway, call join, native, projects, backfill readers
+  watchdog/            proposed: runner, alert rules, delivery, coverage, gaps
+  read-interface/      proposed: answers, local service, command, tool call report
+shared/                shared types (kept); proposed: envelope.ts, vocabulary.ts, reading.ts
+forms/                 proposed: event envelope and read interface forms
+scripts/               kept; proposed: vocabulary-check.ts, write-forms.ts
+docs/                  kept; proposed: security-backlog.md, dependencies.md
+tests/                 proposed: one test file per check, run by `bun test`
 tests/fixtures/        proposed: fixtures for the quickstart checks
 ```
 
@@ -125,6 +137,7 @@ Each item was found by reading the code named; "inferred" marks a conclusion not
 20. Absent from the code: a gateway reader (REQ-004), the harness and gateway join (REQ-005, REQ-168), status header parsing (REQ-010, REQ-011; a search for a header parser found none), alerts and a watchdog (REQ-014, REQ-145), a read interface beyond the session routes (REQ-082 to REQ-085), per-part versions (REQ-023), readers for other projects (REQ-123, REQ-125, REQ-133), a retention setting (REQ-141).
 21. `apps/observability/public/`: the UI reads the token from the address query (against REQ-025).
 22. `apps/observability/package.json`, `extension/package.json`: dependencies at `latest` and `*` (stack constitution principle X).
+23. `docs/SPEC-V2-UI.md`, `docs/V3-PLAN.md`, `docs/V3-STATUS.md` and `.claude/commands/install.md`: the fixed development token value, and start addresses that carry it, appear in tracked documents (against REQ-025 and stack constitution principle VI). Found by a search of every tracked file for the token; these four documents were not otherwise read.
 
 **Not read**: `apps/observability/public/*.js` beyond the token handling; `adapters/claude-code.ts`, `adapters/codex.ts` and `adapters/hermes.ts` in full; `apps/steelman/`; `scripts/` other than the scan test's names; `docs/`; the root `requirements.md` and `design.md`; the other `specs/` entries; `adapters/codex.test.ts` and `scripts/projects-scan.test.ts` in full. Nothing was run except the test suite, so items marked inferred are not verified.
 
@@ -145,4 +158,4 @@ The run also printed connection-failure messages from the Codex adapter test, wh
 
 - Phase 0: [research.md](research.md), one entry per design decision covering an allocated clause, plus four plan proposals.
 - Phase 1: [data-model.md](data-model.md), [contracts/](contracts/), [quickstart.md](quickstart.md).
-- Next step: `/speckit-tasks`, after the three NEEDS CLARIFICATION items are answered or their stated defaults accepted.
+- Next step: `/speckit-tasks` (done: [tasks.md](tasks.md)); the three NEEDS CLARIFICATION items are held there with their defaults (H-1 to H-3).

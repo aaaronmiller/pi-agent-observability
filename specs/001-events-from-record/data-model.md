@@ -17,7 +17,8 @@ The records this component keeps, from the record's design page (section 4) narr
 | `arrival_state` | `arriving`, `not_arriving` | REQ-021 |
 | `tool_outcome` | `succeeded`, `failed`, `unknown` | REQ-012 |
 | `refusal_reason` | `unknown_version`, `invalid_version`, `invalid_event` | REQ-165, REQ-167 |
-| `standing` | `from_record`, `estimate`, `provisional` | R-11 |
+| `standing` | `from_record`, `estimated`, `provisional` | R-11 (`estimated` is spelled as in stack constitution principle IV) |
+| `session_class` | `headless`, `operator` | REQ-084 (headless agents), REQ-146 (operator sessions); proposed to the terminology list |
 
 `unavailable` means a value that could not be read. A thing known not to exist is `absent` where a record needs to say so (for example `header_state = absent`); the two are never merged (stack constitution principle IV).
 
@@ -74,6 +75,7 @@ Derived from events; can be rebuilt from them (design page, section 4).
 | `state` | text | From a live signal only (sibling clause REQ-118) |
 | `locator` | text | Pointer to the session's own record (REQ-006) |
 | `header_seen` | `header_state` | Latest header outcome; an agent whose replies lack the header is reported (REQ-156) |
+| `session_class` | `session_class` | Read from the session's start event payload, as the harness or adapter declares it; `unavailable` when not declared, and such a session is never reported as a failed headless agent (REQ-084, REQ-146) |
 
 ## Session folder (owner-only local state, on the session's machine)
 
@@ -228,23 +230,30 @@ Defaults of this component:
 
 | Setting name | Default | Standing | Clause |
 |---|---|---|---|
-| `alert_time` | 2 minutes after the delivery or report last expected | `estimate` | REQ-014, REQ-084 |
-| `stale_age` | twice the source's reporting interval; 5 minutes where none is stated | `estimate` | REQ-085 |
-| `retention` | no end | `estimate` | REQ-141 |
-| `tool_failure_repeat` | 3 in a row within 10 minutes | `estimate` | REQ-145 |
-| `provider_error_burst` | 5 from one provider within 5 minutes | `estimate` | REQ-145 |
+| `alert_time` | 2 minutes after the delivery or report last expected | `estimated` | REQ-014, REQ-084 |
+| `stale_age` | twice the source's reporting interval; 5 minutes where none is stated | `estimated` | REQ-085 |
+| `retention` | no end | `estimated` | REQ-141 |
+| `tool_failure_repeat` | 3 in a row within 10 minutes | `estimated` | REQ-145 |
+| `provider_error_burst` | 5 from one provider within 5 minutes | `estimated` | REQ-145 |
 | `context_share_no_compaction` | 90 percent | `from_record` | REQ-145 |
-| `capture_buffer_size` | 50 MB per machine | `estimate` | REQ-146 |
+| `capture_buffer_size` | 50 MB per machine | `estimated` | REQ-146 |
 | `short_generation_time` | 50 ms | `from_record` | REQ-172 |
 | `access_token_variable` | the name of the variable that holds the token; no value is stored | `provisional` (this plan) | REQ-026, REQ-173 |
 | `listen_address` | the loopback address | `from_record` | REQ-026 |
+| `local_state_folder` | an owner-only folder (mode 0700) in the user's local state area on each machine; holds producer state, the capture buffer, the machine identity and session folders | `provisional` (this plan) | REQ-008, REQ-017, REQ-146 |
+| `store_path` | a new store file inside `local_state_folder` on the always-on machine; never the old store file | `provisional` (this plan) | REQ-017, REQ-141 |
+| `machine_id` | a placeholder identity generated once per machine and kept in `local_state_folder`; never the host name | `provisional` (this plan) | REQ-003 |
+| `source_list` | every source that has sent an event, typed session, harness, gateway or machine, with no stated reporting interval (so the stale age is 5 minutes) | `provisional` (this plan) | REQ-014, REQ-085, REQ-158 |
+| `expected_pairs` | every machine and harness pair that has sent an event | `provisional` (this plan) | REQ-021 |
+| `living_documents_intake_address` | unset; with no address an alert moves to `not_delivered` with the reason that no address is set | `provisional` (this plan) | REQ-131 |
+| `gateway_record_location` | unset; with no location calls show harness-only and the reader records the reason | `provisional` (this plan) | REQ-004, REQ-005 |
 
 ## Part version
 
 | Field | Type | Rule |
 |---|---|---|
 | `part` | text | `events`, `views`, `refinement`, `workspace` |
-| `version` | text | Moves only when that part changes (REQ-023) |
+| `version` | text or `absent` | Moves only when that part changes (REQ-023); `absent` when the part does not exist yet, never a made-up version (stack constitution principle IV) |
 
 ## Relationships
 

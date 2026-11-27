@@ -17,7 +17,7 @@
 | Session state | Session fields with state and age (REQ-082) |
 | Agent figures | The figures of REQ-009, each a Reading |
 | Alerts | Open alerts with delivery state |
-| Coverage | Coverage entries |
+| Coverage | Coverage entries; refused deliveries and unavailable sources, each with its source and reason; gaps; the `retention` setting with its standing (REQ-019, REQ-021, REQ-141, REQ-167) |
 | Call rows | For a task, attempt or session |
 
 The exact list of questions for each consumer is the consumer's to accept.
@@ -27,5 +27,5 @@ The exact list of questions for each consumer is the consumer's to accept.
 1. Every value is a Reading with `state`, `source` and `observed_at` (REQ-083).
 2. A value older than the stale age is answered `stale` with its last known value (REQ-085).
 3. When the store is unreachable the answer says `unavailable` and why; it never answers zero or empty in its place.
-4. Failures are also sent on the alert stream so the asker does not have to poll for them (REQ-084).
+4. Failures are also sent on an alert stream so the asker does not have to poll for them (REQ-084). Held: whether the orchestrator is told at all is tasks.md H-2; until it is ruled no stream is built, failures are answered on the interface within the alert time, and alerts reach the operator through Living Documents.
 5. A consumer needs none of this project's code to ask (REQ-124, REQ-129).
