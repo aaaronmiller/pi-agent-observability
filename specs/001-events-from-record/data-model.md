@@ -252,7 +252,7 @@ Defaults of this component:
 
 | Field | Type | Rule |
 |---|---|---|
-| `part` | text | `events`, `views`, `refinement`, `workspace` |
+| `part` | text | `telemetry`, `views`, `events`, `reporting`, `evaluation` (ruled 2026-11-27, K; until then `events`, `views`, `refinement`, `workspace`) |
 | `version` | text or `absent` | Moves only when that part changes (REQ-023); `absent` when the part does not exist yet, never a made-up version (stack constitution principle IV) |
 
 ## Relationships

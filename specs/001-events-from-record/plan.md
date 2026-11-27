@@ -2,7 +2,7 @@
 
 **Branch**: none created (work stays on the main line; the feature is named `001-events-from-record`) | **Date**: 2026-11-27 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/001-events-from-record/spec.md`, the record's design page (decisions `CTX-001` to `CTX-030`), the stack constitution in `.specify/memory/constitution.md` (version 1.0.6), and the code in this repository as read on 2026-11-27.
+**Input**: Feature specification from `specs/001-events-from-record/spec.md`, the record's design page (decisions `CTX-001` to `CTX-030`), the stack constitution in `.specify/memory/constitution.md` (version 1.0.6; 1.0.7, ratified 2026-11-27, since), and the code in this repository as read on 2026-11-27.
 
 ## Summary
 
@@ -43,7 +43,7 @@ Taken from the code, not from the record.
 | III Tests first, fixtures only | Pass for the plan; open for the code | Quickstart checks use fixtures only. The existing suite covers no clause of this spec, so tests come first for every clause. |
 | IV Unknown is a state | Conflict in the code | The extension leaves speed undefined instead of `unavailable`; a missing seq is taken as 0 (`apps/observability/server.ts`). The plan's data model gives every value a state. |
 | V Operator holds the irreversible | Pass | Nothing in the plan deletes data; retention has no end until the operator sets one. Edits inside tracked files are reversible changes and are made by tasks; deleting or moving tracked files, deleting stored data the agent did not create, changing credentials and rewriting published history wait for the operator (tasks.md, Held for ruling and OPERATOR tasks). The feature's sources name no kind of reversible change the operator has reserved. |
-| VI Nothing secret leaves or is stored | Conflict in the code and in the published history | No redaction anywhere; full transcript text and folder paths are stored; the token is printed and logged and accepted in an address; a fixed development token is the default in the service unit and appears in several tracked documents (item 23). The plan closes each in the tree (research R-04, R-06, R-07, R-14). The published history keeps the token, a machine nickname and a private network address; only the operator can rewrite it (tasks.md, H-14). |
+| VI Nothing secret leaves or is stored | Conflict in the code and in the published history | No redaction anywhere; full transcript text and folder paths are stored; the token is printed and logged and accepted in an address; a fixed development token is the default in the service unit and appears in several tracked documents (item 23). The plan closes each in the tree (research R-04, R-06, R-07, R-14). The published history keeps the token, a machine nickname and a private network address; only the operator can rewrite it; ruled 2026-11-27 (A): earlier commits do not block building (tasks.md, H-14 closed). |
 | VII One owner per fact | Open item | Call rows copy Routing's requested and served figures for speed; allowed only with source and read time and rebuilt on difference (data model). Records that other projects send (Fleet readings, Recovery records, Quartermaster events, budget readings, task states) are stored as events with `source` and `received_at`; an answer built from them names that source and age, and where the owning project's own interface gives a different current value, the owner's value is shown and the stored event stays as the record of what was received. The current code keeps a start record of its own (fingerprints), which the plan drops (research R-13). |
 | VIII Survive interruption | Open item | Whether each machine needs an always-running sender for its buffer is not settled; the plan proposes draining from the next adapter run and the intake's reconnect, and keeps a sender only if a check shows loss without it. The views part becomes a second always-running process on the always-on machine (research R-01); REQ-022 calls for it, because the events part must keep storing while the views part is stopped. The watchdog and the read interface run inside the events process and add no process. |
 | IX One language | Conflict in the code | Sixteen event types, not the seven kinds; field names are not from the terminology list; the sequence is clock-based in hook adapters and reset to 0 in the extension; the server reports one version for everything. |
@@ -103,6 +103,8 @@ tests/fixtures/        proposed: fixtures for the quickstart checks
 
 **Structure decision**: keep one repository and extend the existing directories (research R-01). The code home of the events part is a NEEDS CLARIFICATION item of the spec; if the operator moves it, this structure moves whole.
 
+(ruled 2026-11-27, K) Observability is one repository, `observability/`, with one folder per part: `telemetry/`, `views/`, `events/`, `reporting/`, `evaluation/`. This component's code goes to `observability/events/`; the tree above is that folder's content, so building continues here and the operator later moves it whole (tasks T138, T139). No path in the code or tests reaches outside this tree, and the other parts reach this one only through its intake and read interface. Data moves by pull: the events part reads the gateway, the harnesses, quota and the other sources through each owner's read interface, and every other project reads this one through its read interface; nothing is pushed to the orchestrator.
+
 ## Complexity Tracking
 
 | Item | Why needed | Simpler alternative rejected because |
@@ -158,4 +160,4 @@ The run also printed connection-failure messages from the Codex adapter test, wh
 
 - Phase 0: [research.md](research.md), one entry per design decision covering an allocated clause, plus four plan proposals.
 - Phase 1: [data-model.md](data-model.md), [contracts/](contracts/), [quickstart.md](quickstart.md).
-- Next step: `/speckit-tasks` (done: [tasks.md](tasks.md)); the three NEEDS CLARIFICATION items are held there with their defaults (H-1 to H-3).
+- Next step: `/speckit-tasks` (done: [tasks.md](tasks.md)); the three NEEDS CLARIFICATION items are held there with their defaults (H-1 to H-3). Since 2026-11-27 rulings K answer H-1 and H-2; H-3 stays held.

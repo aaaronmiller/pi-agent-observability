@@ -12,7 +12,7 @@ Standing words: "recorded decision" means a decision on record before this draft
 - **Decision**: four processes in one repository, each with a version file. The events part is a supervised service that starts with the machine; the views part is another; the refinement part runs as jobs; the workspace part is a layout.
 - **Rationale**: the events must keep working when a view breaks, and the views cannot be tested without the events.
 - **Alternatives rejected**: one program with four modules, because a broken view would take the events down with it (REQ-022). Four repositories, because the views cannot be tested without the events, and four release homes add nothing a version file per part does not give.
-- **Standing**: grouping proposal only; needs a recorded operator statement.
+- **Standing**: grouping proposal only; needs a recorded operator statement. Ruled 2026-11-27 (K): one repository with five part folders (telemetry, views, events, reporting, evaluation), each with its own version; the workspace is drawn by the views part.
 - **Revisit when**: refinement gets its own running owner and a second consumer.
 
 ## R-02 One intake and one store, with adapters and readers at the edge (CTX-002)

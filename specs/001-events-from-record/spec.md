@@ -157,7 +157,7 @@ Requirements: REQ-006, REQ-007.
 
 ### User Story 8 - Independent parts that meet other projects only at named edges (Priority: P2)
 
-Record story: US-39, with REQ-123 from US-24 and REQ-125 from US-16. The events part keeps storing while the views part is stopped, and each of the project's four parts publishes its own version. Event kinds and field names come from the stack's shared vocabulary; every event from any project carries exactly one of seven kinds, and an unknown kind is kept, flagged and counted. Quartermaster's delivery and change events, and Fleet's machine load readings, job states and run records, are accepted. Quartermaster can read skill events and cannot write to the store. Other projects can read the agent count, the work completed and the combined tokens per second.
+Record story: US-39, with REQ-123 from US-24 and REQ-125 from US-16. The events part keeps storing while the views part is stopped, and each of the project's parts publishes its own version (five since ruling K of 2026-11-27: telemetry, views, events, reporting and evaluation). Event kinds and field names come from the stack's shared vocabulary; every event from any project carries exactly one of seven kinds, and an unknown kind is kept, flagged and counted. Quartermaster's delivery and change events, and Fleet's machine load readings, job states and run records, are accepted. Quartermaster can read skill events and cannot write to the store. Other projects can read the agent count, the work completed and the combined tokens per second.
 
 **Why this priority**: Independence keeps this project from doing another project's job, but it builds on the trusted collection of the P1 stories.
 
@@ -166,7 +166,7 @@ Record story: US-39, with REQ-123 from US-24 and REQ-125 from US-16. The events 
 **Acceptance Scenarios**:
 
 1. **Given** the views part stopped, **When** fixture events are sent, **Then** they are stored and appear when the views part starts.
-2. **Given** the four parts, **When** each is asked for its version and one part is changed, **Then** four versions are returned and only the changed part's version moves.
+2. **Given** the five parts (ruling K), **When** each is asked for its version and one part is changed, **Then** five versions are returned and only the changed part's version moves.
 3. **Given** one fixture event of each of the seven kinds, a quota reading and one event of a kind not among the seven, **When** they arrive, **Then** seven kinds are stored with their specific names as fields, the quota reading is a payload field, and the last event is kept and counted as an unknown kind.
 4. **Given** a fixture Quartermaster client, **When** it reads skill events and then attempts a write, **Then** the read returns the events and the write is refused.
 5. **Given** a fixture caller, **When** it asks for the agent count, the work completed and the combined tokens per second, **Then** the three values are returned with their age.
@@ -335,8 +335,8 @@ Each requirement below is the record's clause, word for word, with its record nu
 
 #### Open questions from the record that touch this component
 
-- **Code home** (intent section 12, point 5): [NEEDS CLARIFICATION: Which repository holds the events part: this collector repository, the operator's ops console, the refinement repository or the telemetry package home? The record leaves it open; this specification is written in the collector repository and assumes, until ruled, that the events part is built here.]
-- **How the orchestrator gets data** (intent section 12, point 9; REQ-082, REQ-084): [NEEDS CLARIFICATION: Does the orchestrator ask for data, or is it told? The design recommends that it asks, with an alert stream for failures; the operator has not ruled.]
+- **Code home** (intent section 12, point 5): answered 2026-11-27 (ruling K): Observability is one repository with one folder per part (telemetry, views, events, reporting, evaluation); the events part is its `events/` folder, built in this repository now and moved whole by the operator. Until then this was: [NEEDS CLARIFICATION: Which repository holds the events part: this collector repository, the operator's ops console, the refinement repository or the telemetry package home? The record leaves it open; this specification is written in the collector repository and assumes, until ruled, that the events part is built here.]
+- **How the orchestrator gets data** (intent section 12, point 9; REQ-082, REQ-084): answered 2026-11-27 (ruling K): it asks; data moves by pull through the owner's read interface. Until then this was: [NEEDS CLARIFICATION: Does the orchestrator ask for data, or is it told? The design recommends that it asks, with an alert stream for failures; the operator has not ruled.]
 - **Owner of the reply status header form** (intent section 12, point 8; REQ-128): [NEEDS CLARIFICATION: Does this project publish the header form, with the workflow form and the startup receipt kept by the Harness, as the reconciler proposed? The clause follows that proposal and awaits the operator's ruling (decisions list, entry 20).]
 
 ### Requirements owned by the sibling component
@@ -378,7 +378,7 @@ These are clauses of the same record that this component depends on, or that nam
 - **SC-009**: A search of the store for the reply text of an ingested fixture session finds zero matches, and a second rebuild of a session that ran without an adapter adds zero events.
 - **SC-010**: All replies read back whole, valid-header replies byte-identical, and the three header cases (absent, malformed, one figure missing) are each reported as their own case in three of three trials.
 - **SC-011**: After an unclean stop and start, 100 percent of the events stored before the stop are present exactly once.
-- **SC-012**: Each of the four parts reports its version, and changing one part moves that part's version only.
+- **SC-012**: Each of the five parts (ruling K) reports its version, and changing one part moves that part's version only.
 
 ## Assumptions
 
@@ -402,14 +402,14 @@ Defaults taken from the record: context above ninety percent with no compaction 
 Other assumptions:
 
 - One store on the machine that is always on, fed by a local buffer on each machine, is the design's choice, not the operator's; the operator stated only that collection must cover every machine and the gateway.
-- The four parts with their own versions (REQ-022, REQ-023) rest on the grouping proposal alone and still need a recorded operator statement.
+- The parts with their own versions (REQ-022, REQ-023): ruled 2026-11-27 (K), five part folders of one repository (telemetry, views, events, reporting and evaluation).
 - "The gateway" includes the proxies the operator named alongside it; the record treats all of them as one source of call records and does not depend on the exact reading.
 - The record does not say what happens when the buffer of a headless (not operator) session fills. Until it does, this specification treats it as an open point for planning and assumes no capture is dropped silently.
 - Fixtures, not the operator's live data, are used for every check (stack constitution, principle III).
 
 ## Dependencies on other projects
 
-- **Routing and capacity**: supplies the gateway's per-call records (REQ-004, REQ-005) and the budget reserve one alert rule reads (REQ-145).
+- **Routing and capacity**: supplies the gateway's per-call records (REQ-004, REQ-005) and the budget reserve one alert rule reads (REQ-145), both read through its read interface; it reads the measured task rows the telemetry part stores here through this component's read interface (REQ-121, a pull since ruling K of 2026-11-27).
 - **Harness**: has every agent put the status header first in each reply (Harness REQ-143, cited by REQ-156); writes the attempt receipts that REQ-168 joins, which need the pool and role version added (a proposal); writes the startup receipts behind REQ-027; records parked or uncertain work for REQ-145.
 - **Quartermaster**: emits delivery and change events (REQ-123) and reads skill events through the interface (REQ-124).
 - **Fleet**: sends machine load readings, job states and run records (REQ-125).
